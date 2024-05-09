@@ -18,7 +18,10 @@
 //    "app:00000000-0000-0000-0000-000000000000"
 // 4. At the command line of your PC, send an HTTP message to the service
 //    such as:
-//    curl -L 'http://api.notefile.net/req?project="app:00000000-0000-0000-0000-000000000000"&device="dev:000000000000000"' -d '{"req":"note.add","file":"my-inbound.qi","body":{"my-request-type":"my-request"}}'
+//    curl -L
+//    'http://api.notefile.net/req?project="app:00000000-0000-0000-0000-000000000000"&device="dev:000000000000000"'
+//    -d
+//    '{"req":"note.add","file":"my-inbound.qi","body":{"my-request-type":"my-request"}}'
 
 #include <M5Core2.h>
 #include <Notecard.h>
@@ -35,113 +38,122 @@
 // - Remove usbSerial if you don't want the Notecard library to output debug
 //   information
 
-// #define txRxPinsSerial Serial1
+//#define txRxPinsSerial Serial
 #define usbSerial Serial
 
 // This is the unique Product Identifier for your device
-#ifndef PRODUCT_UID
-#define PRODUCT_UID "biz.yr-design.rob:kittywood" // "com.my-company.my-name:my-project"
-#pragma message "PRODUCT_UID is not defined in this example. Please ensure your Notecard has a product identifier set before running this example or define it in code here. More details at https://dev.blues.io/tools-and-sdks/samples/product-uid"
-#endif
+#define PRODUCT_UID                                                            \
+  "biz.yr-design.rob:kittywood" // "com.my-company.my-name:my-project"
 
 #define myProductID PRODUCT_UID
+
 Notecard notecard;
 #define myLiveDemo true
 
 // One-time Arduino initialization
-void setup()
-{
-    // Set up for debug output (if available).
+void setup() {
+
+  M5.begin(true, true, true,
+           true); // Init M5Core2(Initialization of external I2C is also
+                  // included).  初始化M5Core2(初始化外部I2C也包含在内)
+  // Wire.begin(21, 22); //Detect internal I2C, if this sentence is not added,
+  // it will detect external I2C.  检测内部I2C,若不加此句为检测外部I2C
+
+  Serial.println("Booting");
+  M5.Lcd.setTextColor(
+      WHITE); // Set the font color to yellow.  设置字体颜色为黄色
+  M5.Lcd.setTextSize(2); // Set the font size to 2.  设置字体大小为2
+
+  M5.Lcd.println("M5Core2 StarNote Tester"); // Print a string on the screen.
+                                        // 在屏幕上打印字符串
+  delay(3000);
+  M5.Lcd.fillScreen(BLACK); // Make the screen full of black (equivalent to
+                            // clear() to clear the screen).  使屏幕充满黑色(
+  // Set up for debug output (if available).
 #ifdef usbSerial
-    // If you open Arduino's serial terminal window, you'll be able to watch
-    // JSON objects being transferred to and from the Notecard for each request.
-    usbSerial.begin(115200);
-    const size_t usb_timeout_ms = 3000;
-    for (const size_t start_ms = millis(); !usbSerial && (millis() - start_ms) < usb_timeout_ms;)
-        ;
+  // If you open Arduino's serial terminal window, you'll be able to watch
+  // JSON objects being transferred to and from the Notecard for each request.
+  usbSerial.begin(115200);
+  const size_t usb_timeout_ms = 3000;
+  for (const size_t start_ms = millis();
+       !usbSerial && (millis() - start_ms) < usb_timeout_ms;)
+    ;
 
     // For low-memory platforms, don't turn on internal Notecard logs.
 #ifndef NOTE_C_LOW_MEM
-    notecard.setDebugOutputStream(usbSerial);
+  notecard.setDebugOutputStream(usbSerial);
 #else
 #pragma message("INFO: Notecard debug logs disabled. (non-fatal)")
 #endif // !NOTE_C_LOW_MEM
 #endif // usbSerial
 
-    // Initialize the physical I/O channel to the Notecard
+  // Initialize the physical I/O channel to the Notecard
 #ifdef txRxPinsSerial
-    notecard.begin(txRxPinsSerial, 9600);
+  notecard.begin(txRxPinsSerial, 9600);
 #else
-    notecard.begin();
+  notecard.begin();
 #endif
 
-    // Configure the productUID, and instruct the Notecard to stay connected to
-    // the service if `myLiveDemo` is `true`.
-    J *req = notecard.newRequest("hub.set");
-    if (myProductID[0])
-    {
-        JAddStringToObject(req, "product", myProductID);
-    }
+  // Configure the productUID, and instruct the Notecard to stay connected to
+  // the service if `myLiveDemo` is `true`.
+  J *req = notecard.newRequest("hub.set");
+  if (myProductID[0]) {
+    JAddStringToObject(req, "product", myProductID);
+  }
 #if myLiveDemo
-    JAddStringToObject(req, "mode", "continuous");
-    JAddBoolToObject(req, "sync", true); // Automatically sync when changes are
-                                         // made on notehub
+  JAddStringToObject(req, "mode", "continuous");
+  JAddBoolToObject(req, "sync", true); // Automatically sync when changes are
+                                       // made on notehub
 #else
-    JAddStringToObject(req, "mode", "periodic");
-    JAddNumberToObject(req, "inbound", 60);
+  JAddStringToObject(req, "mode", "periodic");
+  JAddNumberToObject(req, "inbound", 60);
 #endif
-    notecard.sendRequestWithRetry(req, 5);
+  notecard.sendRequestWithRetry(req, 5);
 }
 
 // In the Arduino main loop which is called repeatedly, add outbound data every
 // 15 seconds
-void loop()
-{
-    // On a periodic basis, check the inbound queue for messages.  In a
-    // real-world application, this would be checked using a frequency
-    // commensurate with the required inbound responsiveness. For the most
-    // common "periodic" mode applications, this might be daily or weekly.  In
-    // this example, where we are using "continuous" mode, we check quite often
-    // for demonstratio purposes.
-    static unsigned long nextPollMs = 0;
-    if (millis() > nextPollMs)
-    {
-        nextPollMs = millis() + (INBOUND_QUEUE_POLL_SECS * 1000);
+void loop() {
+  // On a periodic basis, check the inbound queue for messages.  In a
+  // real-world application, this would be checked using a frequency
+  // commensurate with the required inbound responsiveness. For the most
+  // common "periodic" mode applications, this might be daily or weekly.  In
+  // this example, where we are using "continuous" mode, we check quite often
+  // for demonstratio purposes.
+  static unsigned long nextPollMs = 0;
+  if (millis() > nextPollMs) {
+    nextPollMs = millis() + (INBOUND_QUEUE_POLL_SECS * 1000);
 
-        // Process all pending inbound requests
-        while (true)
-        {
-            // Get the next available note from our inbound queue notefile,
-            // deleting it
-            J *req = notecard.newRequest("note.get");
-            JAddStringToObject(req, "file", INBOUND_QUEUE_NOTEFILE);
-            JAddBoolToObject(req, "delete", true);
-            J *rsp = notecard.requestAndResponse(req);
-            if (rsp != NULL)
-            {
-                // If an error is returned, this means that no response is
-                // pending.  Note that it's expected that this might return
-                // either a "note does not exist" error if there are no pending
-                // inbound notes, or a "file does not exist" error if the
-                // inbound queue hasn't yet been created on the service.
-                if (notecard.responseError(rsp))
-                {
-                    notecard.deleteResponse(rsp);
-                    break;
-                }
-
-                // Get the note's body
-                J *body = JGetObject(rsp, "body");
-                if (body != NULL)
-                {
-
-                    // Simulate Processing the response here
-                    usbSerial.print("[APP] INBOUND REQUEST: ");
-                    usbSerial.println(JGetString(body, INBOUND_QUEUE_COMMAND_FIELD));
-                    usbSerial.println();
-                }
-            }
-            notecard.deleteResponse(rsp);
+    // Process all pending inbound requests
+    while (true) {
+      // Get the next available note from our inbound queue notefile,
+      // deleting it
+      J *req = notecard.newRequest("note.get");
+      JAddStringToObject(req, "file", INBOUND_QUEUE_NOTEFILE);
+      JAddBoolToObject(req, "delete", true);
+      J *rsp = notecard.requestAndResponse(req);
+      if (rsp != NULL) {
+        // If an error is returned, this means that no response is
+        // pending.  Note that it's expected that this might return
+        // either a "note does not exist" error if there are no pending
+        // inbound notes, or a "file does not exist" error if the
+        // inbound queue hasn't yet been created on the service.
+        if (notecard.responseError(rsp)) {
+          notecard.deleteResponse(rsp);
+          break;
         }
+
+        // Get the note's body
+        J *body = JGetObject(rsp, "body");
+        if (body != NULL) {
+
+          // Simulate Processing the response here
+          usbSerial.print("[APP] INBOUND REQUEST: ");
+          usbSerial.println(JGetString(body, INBOUND_QUEUE_COMMAND_FIELD));
+          usbSerial.println();
+        }
+      }
+      notecard.deleteResponse(rsp);
     }
+  }
 }
