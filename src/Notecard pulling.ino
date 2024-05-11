@@ -38,7 +38,7 @@
 // - Remove usbSerial if you don't want the Notecard library to output debug
 //   information
 
-//#define txRxPinsSerial Serial
+// #define txRxPinsSerial Serial
 #define usbSerial Serial
 
 // This is the unique Product Identifier for your device
@@ -67,8 +67,8 @@ void setup() {
   M5.Lcd.println("M5Core2 StarNote Tester"); // Print a string on the screen.
                                         // 在屏幕上打印字符串
   delay(3000);
-  M5.Lcd.fillScreen(BLACK); // Make the screen full of black (equivalent to
-                            // clear() to clear the screen).  使屏幕充满黑色(
+  // M5.Lcd.fillScreen(BLACK); // Make the screen full of black (equivalent to
+
   // Set up for debug output (if available).
 #ifdef usbSerial
   // If you open Arduino's serial terminal window, you'll be able to watch
@@ -148,9 +148,9 @@ void loop() {
         if (body != NULL) {
 
           // Simulate Processing the response here
-          usbSerial.print("[APP] INBOUND REQUEST: ");
-          usbSerial.println(JGetString(body, INBOUND_QUEUE_COMMAND_FIELD));
-          usbSerial.println();
+          // usbSerial.print("[APP] INBOUND REQUEST: ");
+          // usbSerial.println(JGetString(body, INBOUND_QUEUE_COMMAND_FIELD));
+          // usbSerial.println();
         }
       }
       notecard.deleteResponse(rsp);
