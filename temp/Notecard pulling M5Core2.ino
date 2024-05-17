@@ -10,7 +10,7 @@
 //
 // In order to use this example,
 // 1. Get the device up and running the code below, successfully connecting to
-//    the servie
+//    the service
 // 2. Use the "Devices" view on notehub.io to determine the DeviceUID of the
 //    device, which is a unique string that looks like "dev:000000000000000"
 // 3. Use the "Settings / Project" view on notehub.io to determine the App UID
@@ -30,6 +30,14 @@
 #define INBOUND_QUEUE_POLL_SECS 10
 #define INBOUND_QUEUE_NOTEFILE "my-inbound.qi"
 #define INBOUND_QUEUE_COMMAND_FIELD "my-request-type"
+
+//versioning setup
+#define  MAJOR_VERSION 2
+#define  MINOR_VERSION .2
+#define  PATCH_VERSION .3
+
+#define VERSION_NUMBER STR(MAJOR_VERSION) "." STR(MINOR_VERSION) "." STR(PATCH_VERSION)
+#define VERSION_STRING "Starnote M5tack" VERSION_NUMBER
 
 // Note that both of these definitions are optional; just prefix either line
 // with `//` to remove it.
@@ -63,13 +71,12 @@ void setup() {
   M5.Lcd.setTextColor(
       WHITE); // Set the font color to yellow.  设置字体颜色为黄色
   M5.Lcd.setTextSize(2); // Set the font size to 2.  设置字体大小为2
+  M5.Lcd.print("M5Core2 StarNote Tester"); 
+  M5.Lcd.println(MAJOR_VERSION+MINOR_VERSION+PATCH_VERSION); // Print a string on the screen.
 
-  M5.Lcd.println("M5Core2 StarNote Tester"); // Print a string on the screen.
-                                        // 在屏幕上打印字符串
-  delay(3000);
+  delay(1000);
   // M5.Lcd.fillScreen(BLACK); // Make the screen full of black (equivalent to
 
-  // Set up for debug output (if available).
 #ifdef usbSerial
   // If you open Arduino's serial terminal window, you'll be able to watch
   // JSON objects being transferred to and from the Notecard for each request.
@@ -122,6 +129,7 @@ void loop() {
   // for demonstratio purposes.
   static unsigned long nextPollMs = 0;
   if (millis() > nextPollMs) {
+    M5.Lcd.println("pulling in data");
     nextPollMs = millis() + (INBOUND_QUEUE_POLL_SECS * 1000);
 
     // Process all pending inbound requests
